@@ -91,6 +91,8 @@ int main(){
     pthread_join(consumer_thread, NULL);
 
     pthread_mutex_destroy(&lock);
+    pthread_cond_destroy(&not_full);
+    pthread_cond_destroy(&not_empty);
 
     return 0;
 }
