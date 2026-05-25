@@ -1,5 +1,4 @@
-// What I have to write here basically a thread pool that can take any arbitary fn as an input along
-// with its argument and then execute it
+// This file demonstrate implementation of basic thread pool
 
 #include<stdio.h>
 #include<unistd.h>
@@ -89,6 +88,11 @@ void* worker(void* arg){
         // release lock
         pthread_mutex_unlock(&lock);
 
+        if(job.function == NULL){
+            printf("Worker %d shutting down \n", id);
+            break;
+        }
+
         // process the job
         job.function(job.arg);
     }
@@ -112,7 +116,10 @@ int main(){
         *value = i;
         submit_job(execute_job, value);
     }
-
+    // inject poison pill for shutting down workers after processing all the jobs
+    for (int i = 0; NUM_WORKERS > i; i++){
+        submit_job(NULL, NULL);
+    }
     for(int i = 0; i < NUM_WORKERS; i++){
         pthread_join(worker_thread[i], NULL);
     }
