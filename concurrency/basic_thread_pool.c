@@ -48,6 +48,11 @@ void* worker(void* arg){
         }
 
         int job = dequeue();
+        if(job == -1){
+            pthread_mutex_unlock(&lock);
+            printf("Shutting down the worker \n");
+            break;
+        }
         pthread_cond_signal(&not_full);
         pthread_mutex_unlock(&lock);
 
@@ -74,7 +79,15 @@ void* producer(void* arg){
         sleep(1);
         
     }
-
+    for (int i = 0; i < NUM_WORKERS; i++){
+        pthread_mutex_lock(&lock);
+        while(queue.count == QUEUE_SIZE){
+            pthread_cond_wait(&not_full, &lock);
+        }
+        enqueue(-1);
+        pthread_cond_signal(&not_empty);
+        pthread_mutex_unlock(&lock);
+    }
     return NULL;
 }
 int main(){
@@ -99,7 +112,11 @@ int main(){
     pthread_create(&producer_thread, NULL, producer, NULL);
 
     pthread_join(producer_thread, NULL);
+    for (int i = 0; i < NUM_WORKERS; i++){
+        pthread_join(workers[i], NULL);
+    }
+    
 
-    sleep(10);
+    //sleep(10);
     return 0;
 }
